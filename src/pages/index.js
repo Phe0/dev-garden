@@ -1,7 +1,6 @@
-import React from "react"
+import React, { useState } from "react"
 import { Link, graphql } from "gatsby"
 
-import Bio from "../components/bio"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
 
@@ -9,11 +8,23 @@ const BlogIndex = ({ data, location }) => {
   const siteTitle = data.site.siteMetadata?.title || `Title`
   const posts = data.allMarkdownRemark.nodes
 
+  const [search, setSearch] = useState('')
+  const [filteredPosts, setFilteredPosts] = useState(posts)
+
+  function handleSearch(event) {
+    setSearch(event.target.value);
+
+    const filtered = posts.filter(post => {
+      return post.frontmatter.title.toLowerCase().indexOf(event.target.value.toLowerCase()) !== -1;
+    });
+
+    setFilteredPosts(filtered);
+  }
+
   if (posts.length === 0) {
     return (
       <Layout location={location} title={siteTitle}>
         <SEO title="All posts" />
-        <Bio />
         <p>
           No blog posts found. Add markdown posts to "content/blog" (or the
           directory you specified for the "gatsby-source-filesystem" plugin in
@@ -26,35 +37,27 @@ const BlogIndex = ({ data, location }) => {
   return (
     <Layout location={location} title={siteTitle}>
       <SEO title="All posts" />
-      <Bio />
-      <ol style={{ listStyle: `none` }}>
-        {posts.map(post => {
+      <input type="text" value={search} onChange={handleSearch} placeholder="Search for a post" />
+      <ol className="post-list" style={{ listStyle: `none` }}>
+        {filteredPosts.map(post => {
           const title = post.frontmatter.title || post.fields.slug
 
           return (
             <li key={post.fields.slug}>
-              <article
-                className="post-list-item"
-                itemScope
-                itemType="http://schema.org/Article"
-              >
-                <header>
-                  <h2>
-                    <Link to={post.fields.slug} itemProp="url">
+              <Link to={post.fields.slug} style={{ textDecoration: 'none' }} itemProp="url">
+                <article
+                  className="post-list-item"
+                  itemScope
+                  itemType="http://schema.org/Article"
+                >
+                  <header>
+                    <h2>
                       <span itemProp="headline">{title}</span>
-                    </Link>
-                  </h2>
+                    </h2>
+                  </header>
                   <small>{post.frontmatter.date}</small>
-                </header>
-                <section>
-                  <p
-                    dangerouslySetInnerHTML={{
-                      __html: post.frontmatter.description || post.excerpt,
-                    }}
-                    itemProp="description"
-                  />
-                </section>
-              </article>
+                </article>
+              </Link>
             </li>
           )
         })}
